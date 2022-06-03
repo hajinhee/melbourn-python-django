@@ -5,7 +5,8 @@ from context.domains import Dataset
 from context.models import Model
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score
-from sklearn.ensemble import RandomForestClassifier  #분류기
+from sklearn.ensemble import RandomForestClassifier    # Classifier 분류
+# from sklearn.ensemble import RandomForestRegressor   # Regressor 회귀
 
 
 class TitanicModel(object):
