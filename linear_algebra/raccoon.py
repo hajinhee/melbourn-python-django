@@ -3,14 +3,12 @@ from scipy import misc  # 패키지 임포트
 from matplotlib import rc, font_manager
 rc('font', family=font_manager.FontProperties(fname='C:/Windows/Fonts/malgunsl.ttf').get_name())
 
-img_rgb = misc.face()  # 컬러 이미지 로드
-img_rgb.shape  # 데이터의 모양
-
 
 class Raccoon:
-
     @staticmethod
     def solution() -> None:
+        img_rgb = misc.face()  # 컬러 이미지 로드
+        print(img_rgb.shape)  # 데이터의 모양
         plt.subplot(221)
         plt.imshow(img_rgb, cmap=plt.cm.gray)  # 컬러 이미지 출력
         plt.axis("off")
@@ -31,7 +29,7 @@ class Raccoon:
         plt.axis("off")
         plt.title("Blue 채널")
 
-        print(plt.show())
+        plt.show()
 
 
 if __name__ == '__main__':
