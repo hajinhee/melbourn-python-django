@@ -1,6 +1,8 @@
 # dname, sname, fname, train, test, id, label
 from dataclasses import dataclass
 from abc import *
+import pandas as pd
+import googlemaps
 
 
 @dataclass
@@ -59,43 +61,52 @@ class Dataset:
 
 class PrinterBase(metaclass=ABCMeta):
     @abstractmethod
-    def dframe(self):
+    def dframe(self, this):
         pass
 
 
 class ReaderBase(metaclass=ABCMeta):
     @abstractmethod
-    def new_file(self):
+    def new_file(self, file) -> str:
         pass
 
     @abstractmethod
-    def csv(self):
+    def csv(self, fname) -> object:
         pass
 
     @abstractmethod
-    def xls(self):
+    def xls(self, fname, header, cols) -> object:
         pass
 
     @abstractmethod
-    def json(self):
+    def json(self, fname) -> object:
         pass
 
 
 class Printer(PrinterBase):
-    def dframe(self):
-        pass
+    def dframe(self, this):
+        print('*' * 100)
+        print(f'1. Target type \n {type(this)} ')
+        print(f'2. Target column \n {this.columns} ')
+        print(f'3. Target top 1개 행\n {this.head(1)} ')
+        print(f'4. Target bottom 1개 행\n {this.tail(1)} ')
+        print(f'4. Target null 의 갯수\n {this.isnull().sum()}개')
+        print('*' * 100)
 
 
 class Reader(ReaderBase):
-    def new_file(self):
-        pass
+    def new_file(self, file) -> str:
+        return file.context + file.fname
 
-    def csv(self):
-        pass
+    def csv(self, fname) -> object:
+        return pd.read_csv(f'{self.new_file(fname)}.csv', encoding='', thousands=',')
 
-    def xls(self):
-        pass
+    def xls(self, fname, header, cols) -> object:
+        return pd.read_excel(f'{self.new_file(fname)}.xls', header=header, usecols=cols)
 
-    def json(self):
-        pass
+    def json(self, fname) -> object:
+        return pd.read_json(f'{self.new_file(fname)}.json', encoding='UTF-8')
 
+    def gmaps(self) -> object:
+        return googlemaps.Client(key='')
+    
