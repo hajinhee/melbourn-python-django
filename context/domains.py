@@ -108,17 +108,6 @@ class ReaderBase(metaclass=ABCMeta):
         pass
 
 
-class Printer(PrinterBase):
-    def dframe(self, this):
-        print('*' * 100)
-        print(f'1. Target type \n {type(this)} ')
-        print(f'2. Target column \n {this.columns} ')
-        print(f'3. Target top 1개 행\n {this.head(1)} ')
-        print(f'4. Target bottom 1개 행\n {this.tail(1)} ')
-        print(f'4. Target null 의 갯수\n {this.isnull().sum()}개')
-        print('*' * 100)
-
-
 class Reader(ReaderBase):
     def new_file(self, file) -> str:
         return file.context + file.fname
@@ -126,12 +115,21 @@ class Reader(ReaderBase):
     def csv(self, file) -> object:
         return pd.read_csv(f'{self.new_file(file)}.csv', encoding='', thousands=',')
 
-    def xls(self, file, header, cols) -> object:
+    def xls(self, file, header, cols, ) -> object:
         return pd.read_excel(f'{self.new_file(file)}.xls', header=header, usecols=cols)
 
     def json(self, file) -> object:
         return pd.read_json(f'{self.new_file(file)}.json', encoding='UTF-8')
 
-    def gmaps(self) -> object:
+    def gmaps(self):
         return googlemaps.Client(key='')
 
+    @staticmethod
+    def print(this):
+        print('*' * 100)
+        print(f'1. Target type \n {type(this)} ')
+        print(f'2. Target column \n {this.columns} ')
+        print(f'3. Target top 1개 행\n {this.head(1)} ')
+        print(f'4. Target bottom 1개 행\n {this.tail(1)} ')
+        print(f'4. Target null 의 갯수\n {this.isnull().sum()}개')
+        print('*' * 100)
