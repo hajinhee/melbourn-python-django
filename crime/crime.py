@@ -87,9 +87,9 @@ class Solution(Reader):
         bins = list(unemployment["Unemployment"].quantile([0, 0.25, 0.5, 0.75, 1]))
         m = folium.Map(location=[48, -102], zoom_start=3)
         folium.Choropleth(
-            geo_data=states, # dataframe 이 아님
-            name="choropleth",
-            data=unemployment, # 지도 위에 얹을 데이터
+            geo_data=states,
+            name="choropleth", # dataframe 이 아님.
+            data=unemployment,
             columns=["State", "Unemployment"],
             key_on="feature.id",
             fill_color="YlGn",
