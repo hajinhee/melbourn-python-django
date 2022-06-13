@@ -3,6 +3,9 @@ from dataclasses import dataclass
 from abc import *
 import pandas as pd
 import googlemaps
+from typing import TypeVar
+PandasDataFrame = TypeVar('pandas.core.frame.DataFrame')
+GooglemapsClient = TypeVar('googlemaps.Client')
 
 
 @dataclass
@@ -112,17 +115,22 @@ class Reader(ReaderBase):
     def new_file(self, file) -> str:
         return file.context + file.fname
 
-    def csv(self, file) -> object:
-        return pd.read_csv(f'{self.new_file(file)}.csv', encoding='', thousands=',')
+    def csv(self, path: str) -> PandasDataFrame:
+        o = pd.read_csv(f'{self.new_file(path)}.csv', encoding='UTF-8', thousands=',')
+        print(f'type: {type(o)}')
+        return o
 
-    def xls(self, file, header, cols, ) -> object:
-        return pd.read_excel(f'{self.new_file(file)}.xls', header=header, usecols=cols)
+    def xls(self, path: str, header: str, cols: str, skiprows) -> PandasDataFrame:
+        return pd.read_excel(f'{self.new_file(path)}.xls', header=header, usecols=cols)
 
-    def json(self, file) -> object:
-        return pd.read_json(f'{self.new_file(file)}.json', encoding='UTF-8')
+    def json(self, path: str) -> PandasDataFrame:
+        return pd.read_json(f'{self.new_file(path)}.json', encoding='UTF-8')
 
-    def gmaps(self):
-        return googlemaps.Client(key='')
+    @staticmethod
+    def gmaps() -> GooglemapsClient:
+        a = googlemaps.Client(key='')
+        print(type(a))
+        return a
 
     @staticmethod
     def print(this):
