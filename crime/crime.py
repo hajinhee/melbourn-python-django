@@ -19,6 +19,8 @@ class Solution(Reader):
             print('1. crime_in_seoul.csv, 구글맵 API 를 이용해서 서울시내 경찰서 주소목록파일을 작성하시오.')
             print('2. us-states.json, us_unemployment.csv 를 이용해서 미국 실업률 지도를 작성하시오.')
             print('3. cctv_in_seoul.csv, pop_in_seoul.csv 를 이용해서 서울시내 경찰서 주소목록파일(cctv_pop.csv)을 작성하시오.')
+            print('4. police_pos.csv 를 이용해서 경찰서 범죄 검거율 정규화파일(police_norm.csv)을 작성하시오.')
+            print('5. 서울시내 경찰서 범죄발생과 검거율 현황지도(polium)를 작성하시오.')
             return input('메뉴 선택 \n')
 
         while 1:
@@ -33,6 +35,8 @@ class Solution(Reader):
                 self.save_cctv_pos()
             if menu == '4':
                 self.save_police_norm()
+            if menu == '5':
+                self.draw_crime_map()
             elif menu == '0':
                 break
 
@@ -70,28 +74,32 @@ class Solution(Reader):
         station_lngs = []
 
         print(station_names[21])
-        print('*'*20)
+        print('*' * 20)
         for i, name in enumerate(station_names):
             if name != '서울종암경찰서':
                 temp = gmaps.geocode(name, language='ko')
             else:
                 temp = [{'address_components':
-            [{'long_name': '１７０', 'short_name': '１７０', 'types': ['premise']},
-            {'long_name': '보문로', 'short_name': '보문로', 'types': ['political', 'sublocality', 'sublocality_level_4']},
-            {'long_name': '삼선동', 'short_name': '삼선동', 'types': ['political', 'sublocality', 'sublocality_level_2']},
-            {'long_name': '성북구', 'short_name': '성북구', 'types': ['political', 'sublocality', 'sublocality_level_1']},
-            {'long_name': '서울특별시', 'short_name': '서울특별시', 'types': ['administrative_area_level_1', 'political']},
-            {'long_name': '대한민국', 'short_name': 'KR', 'types': ['country', 'political']},
-            {'long_name': '136-045', 'short_name': '136-045', 'types': ['postal_code']}],
-            'formatted_address': '대한민국 서울특별시 성북구 화랑로7길 32',
-            'geometry': {'location':
-                {'lat': 37.60388169879458, 'lng': 127.04001571848704},
-                'location_type': 'ROOFTOP',
-                'viewport': {'northeast': {'lat': 37.60388169879458, 'lng': 127.04001571848704},
-                'southwest': {'lat': 37.60388169879458, 'lng': 127.04001571848704}}},
-                'partial_match': True, 'place_id': 'ChIJCzgT1Me8fDURiSAT03pwJPg',
-                'plus_code': {'compound_code': 'H2Q8+WJ 대한민국 서울특별시', 'global_code': '8Q99H2Q8+WJ'},
-                'types': ['establishment', 'point_of_interest', 'police']}]
+                             [{'long_name': '１７０', 'short_name': '１７０', 'types': ['premise']},
+                              {'long_name': '보문로', 'short_name': '보문로',
+                               'types': ['political', 'sublocality', 'sublocality_level_4']},
+                              {'long_name': '삼선동', 'short_name': '삼선동',
+                               'types': ['political', 'sublocality', 'sublocality_level_2']},
+                              {'long_name': '성북구', 'short_name': '성북구',
+                               'types': ['political', 'sublocality', 'sublocality_level_1']},
+                              {'long_name': '서울특별시', 'short_name': '서울특별시',
+                               'types': ['administrative_area_level_1', 'political']},
+                              {'long_name': '대한민국', 'short_name': 'KR', 'types': ['country', 'political']},
+                              {'long_name': '136-045', 'short_name': '136-045', 'types': ['postal_code']}],
+                         'formatted_address': '대한민국 서울특별시 성북구 화랑로7길 32',
+                         'geometry': {'location':
+                                          {'lat': 37.60388169879458, 'lng': 127.04001571848704},
+                                      'location_type': 'ROOFTOP',
+                                      'viewport': {'northeast': {'lat': 37.60388169879458, 'lng': 127.04001571848704},
+                                                   'southwest': {'lat': 37.60388169879458, 'lng': 127.04001571848704}}},
+                         'partial_match': True, 'place_id': 'ChIJCzgT1Me8fDURiSAT03pwJPg',
+                         'plus_code': {'compound_code': 'H2Q8+WJ 대한민국 서울특별시', 'global_code': '8Q99H2Q8+WJ'},
+                         'types': ['establishment', 'point_of_interest', 'police']}]
             # print(f'name {i} = {temp[0].get("formatted_address")}')
             ''''
             0번 중부서인경우는 대한민국 서울특별시 중구 수표로 27 이 담긴다.
@@ -200,11 +208,8 @@ class Solution(Reader):
         police['절도검거율'] = police['절도 검거'].astype(int) / police['절도 발생'].astype(int) * 100
         police['폭력검거율'] = police['폭력 검거'].astype(int) / police['폭력 발생'].astype(int) * 100
         police.drop(columns={'살인 검거', '강도 검거', '강간 검거', '절도 검거', '폭력 검거'}, axis=1, inplace=True)
-
-        for i in self.crime_rate_columns:
-            # loc() 는 데이터프레임의 행이나 컬럼에 index로 접근한다.
-            # 그래서 police[i] 로 접근하도록 한다.
-            police[i].loc[police[i] > 100] = 100  # 데이터값의 기간 오류로 100을 넘으면 100으로 계산
+        # for i in self.crime_rate_columns:
+        #     police[i].loc[police[i] > 100] = 100
         police.to_csv('./save/police.csv', sep=',', encoding='UTF-8')
         police.rename(columns={
             '살인 발생': '살인',
@@ -213,26 +218,9 @@ class Solution(Reader):
             '절도 발생': '절도',
             '폭력 발생': '폭력'
         }, inplace=True)
-        print(police)
 
         x = police[self.crime_rate_columns].values
         min_max_scalar = preprocessing.MinMaxScaler()
-        """     
-        피쳐 스케일링(Feature scalining)은 해당 피쳐들의 값을 일정한 수준으로 맞춰주는 것이다.
-        이때 적용되는 스케일링 방법이 표준화(standardization) 와 정규화(normalization)다.
-
-        1단계: 표준화(공통 척도)를 진행한다.
-            표준화는 정규분포를 데이터의 평균을 0, 분산이 1인 표준정규분포로 만드는 것이다.
-            x = (x - mu) / sigma
-            scale = (x - np.mean(x, axis=0)) / np.std(x, axis=0)
-        2단계: 이상치 발견 및 제거
-        3단계: 정규화(공통 간격)를 진행한다.
-            정규화에는 평균 정규화, 최소-최대 정규화, 분위수 정규화가 있다.
-             * 최소최대 정규화는 모든 데이터를 최대값을 1, 최솟값을 0으로 만드는 것이다.
-            도메인은 데이터의 범위이다.
-            스케일은 데이터의 분포이다.
-            목적은 도메인을 일치시키거나 스케일을 유사하게 만든다.     
-        """
         x_scaled = min_max_scalar.fit_transform(x.astype(float))
         police_norm = pd.DataFrame(x_scaled, columns=self.crime_columns, index=police.index)
         police_norm[self.crime_rate_columns] = police[self.crime_rate_columns]
@@ -264,9 +252,92 @@ class Solution(Reader):
         m.save("./save/folium_test.html")
 
     def draw_crime_map(self):
-        self.file.fname = 'geo_simple'
-        a = self.csv(self.file)
-        print(a)
+        file = self.file
+        file.context = './data/'
+
+        file.fname = 'geo_simple'
+        seoul_map = self.mpa_json(file)  # 서울시 지도 geo_simple
+        file.fname = 'crime_in_seoul'
+        crime = self.csv(file)  # 범죄현황 데이터 crime_in_seoul
+
+        file.context = './save/'
+        file.fname = 'police_norm'
+        police_norm = self.csv(file)  # 검거율 정규화 데이터 police_norm
+        file.fname = 'police_pos'
+        police_pos = self.csv(file)  # 경찰서 위치 police_pos
+
+        station_names = []
+        for name in crime['관서명']:
+            station_names.append(f'서울{str(name[:-1])}경찰서')
+        print(f'station_names range: {len(station_names)}')
+        for i, name in enumerate(station_names):
+            print(f'name {i} = {name}')
+        gmaps = self.gmaps()
+
+        station_addrs = []
+        station_lats = []
+        station_lngs = []
+
+        print(station_names[21])
+        print('*' * 20)
+        for i, name in enumerate(station_names):
+            if name != '서울종암경찰서':
+                temp = gmaps.geocode(name, language='ko')
+            else:
+                temp = self.jongam_police_info()
+            # print(f'name {i} = {temp[0].get("formatted_address")}')
+            station_addrs.append(temp[0].get('formatted_address'))
+            t_loc = temp[0].get('geometry')
+            station_lats.append(t_loc['location']['lat'])
+            station_lngs.append(t_loc['location']['lng'])
+        police_pos['lat'] = station_lats
+        police_pos['lng'] = station_lngs
+        col = ['살인 검거', '강도 검거', '강간 검거', '절도 검거', '폭력 검거']
+        tmp = police_pos[col] / police_pos[col].max()
+        police_pos['검거'] = np.sum(tmp, axis=1)
+
+        folium_map = folium.Map(location=[37.5502, 126.982], zoom_start=12, title='Stamen Toner')
+        folium.Choropleth(
+            geo_data=seoul_map,
+            data=tuple(zip(police_norm['구별'], police_norm['범죄'])),
+            columns=["State", "Crime Rate"],
+            key_on="feature.id",
+            fill_color="PuRd",
+            fill_opacity=0.7,
+            line_opacity=0.2,
+            legend_name="Crime Rate (%)",
+            reset=True,
+        ).add_to(folium_map)
+        for i in police_pos.index:
+            folium.CircleMarker([police_pos['lat'][i], police_pos['lng'][i]],
+                                radius=police_pos['검거'][i] * 10,
+                                fill_color='#0a0a32').add_to(folium_map)
+
+        folium_map.save('./save/crime_map.html')
+
+
+    def jongam_police_info(self):
+        return [{'address_components':
+              [{'long_name': '１７０', 'short_name': '１７０', 'types': ['premise']},
+               {'long_name': '보문로', 'short_name': '보문로',
+                'types': ['political', 'sublocality', 'sublocality_level_4']},
+               {'long_name': '삼선동', 'short_name': '삼선동',
+                'types': ['political', 'sublocality', 'sublocality_level_2']},
+               {'long_name': '성북구', 'short_name': '성북구',
+                'types': ['political', 'sublocality', 'sublocality_level_1']},
+               {'long_name': '서울특별시', 'short_name': '서울특별시',
+                'types': ['administrative_area_level_1', 'political']},
+               {'long_name': '대한민국', 'short_name': 'KR', 'types': ['country', 'political']},
+               {'long_name': '136-045', 'short_name': '136-045', 'types': ['postal_code']}],
+                  'formatted_address': '대한민국 서울특별시 성북구 화랑로7길 32',
+                  'geometry': {'location':
+                   {'lat': 37.60388169879458, 'lng': 127.04001571848704},
+                   'location_type': 'ROOFTOP',
+                   'viewport': {'northeast': {'lat': 37.60388169879458, 'lng': 127.04001571848704},
+                                'southwest': {'lat': 37.60388169879458, 'lng': 127.04001571848704}}},
+                  'partial_match': True, 'place_id': 'ChIJCzgT1Me8fDURiSAT03pwJPg',
+                  'plus_code': {'compound_code': 'H2Q8+WJ 대한민국 서울특별시', 'global_code': '8Q99H2Q8+WJ'},
+                  'types': ['establishment', 'point_of_interest', 'police']}]
 
 
 if __name__ == '__main__':
