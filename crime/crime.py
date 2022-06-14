@@ -221,6 +221,8 @@ class Solution(Reader):
 
         x = police[self.crime_rate_columns].values
         min_max_scalar = preprocessing.MinMaxScaler()
+
+
         x_scaled = min_max_scalar.fit_transform(x.astype(float))
         police_norm = pd.DataFrame(x_scaled, columns=self.crime_columns, index=police.index)
         police_norm[self.crime_rate_columns] = police[self.crime_rate_columns]
