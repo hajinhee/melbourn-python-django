@@ -89,6 +89,7 @@ class Solution:
             data['hong'].append(self.get_num(each[4]))
             data['ahn'].append(self.get_num(each[5]))
 
+
     def read_result(self):
         election_result = pd.read_csv("./save/election_result.csv", encoding='utf-8',
                                       index_col=0)
