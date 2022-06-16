@@ -10,8 +10,6 @@ from matplotlib import pyplot as plt
 from context.domains import Reader, File
 import platform
 import matplotlib.pyplot as plt
-from matplotlib import font_manager, rc
-
 
 
 class Solution(Reader):
@@ -53,7 +51,7 @@ class Solution(Reader):
         file.fname = 'election_result'
         election_result = self.csv(file)
         # ic(election_result.head())
-        election_result = self.change_sido_name(election_result)
+        election_result = self.change_name(election_result)
         election_result = self.calc_percent_vote(election_result)
         file.fname = 'draw_korea'
         draw_korea = self.csv(file)
