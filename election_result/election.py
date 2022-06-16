@@ -1,3 +1,4 @@
+import matplotlib
 import numpy as np
 import pandas as pd
 import re
@@ -7,19 +8,10 @@ warnings.simplefilter(action = 'ignore', category = FutureWarning)
 from icecream import ic
 from matplotlib import pyplot as plt
 from context.domains import Reader, File
-
 import platform
 import matplotlib.pyplot as plt
-path = "c:\Windows\Fonts\gulim.ttc"
 from matplotlib import font_manager, rc
-if platform.system() == 'Darwin':
-    rc('font', family='AppleGothic')
-elif platform.system() == 'Windows':
-    font_name = font_manager.FontProperties(fname=path).get_name()
-    rc('font', family=font_name)
-else:
-    print('Unknown system... sorry~~~~')
-plt.rcParams['axes.unicode_minus'] = False
+
 
 
 class Solution(Reader):
@@ -98,8 +90,8 @@ class Solution(Reader):
 
         # 득표율 = 득표수 / 투표자수
         # 문재인, 홍준표, 안철수 후보의 득표율을 계산
-        election_result[['rate_moon', 'rate_hong', 'rate_ahn']] = election_result[['moon', 'hong', 'ahn']].div(
-            election_result['pop'], axis=0)
+        election_result[['rate_moon', 'rate_hong', 'rate_ahn']] = election_result[['moon', 'hong', 'ahn']]\
+            .div(election_result['pop'], axis=0)
         election_result[['rate_moon', 'rate_hong', 'rate_ahn']] *= 100
         # ic(election_result.head())
         '''
@@ -270,6 +262,9 @@ class Solution(Reader):
         final_elect_data.to_csv('./save/final_elect_data.csv', index=False)
 
 
+    def calc_percent_vote(self, ):
+
+
     def visualize_percent_vote(self, target_data, blocked_map, cmap_name):
         BORDER_LINES = [
             [(5, 1), (5, 2), (7, 2), (7, 3), (11, 3), (11, 0)],  # 인천
@@ -340,6 +335,11 @@ class Solution(Reader):
         plt.show()
 
     def draw_korea(self):
+        # 한글 깨짐 문제
+        path = "c:\Windows\Fonts\gulim.ttc"
+        font_name = font_manager.FontProperties(fname=path).get_name()
+        matplotlib.rc('font', family=font_name)
+
         file = self.file
         file.fname = 'final_elect_data'
         self.file.context = './save/'
