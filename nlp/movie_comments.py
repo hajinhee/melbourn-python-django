@@ -1,17 +1,18 @@
 import urllib
 
-import numpy as np
 from bs4 import BeautifulSoup
 
 from context.domains import Reader, File
 from icecream import ic
 import pandas as pd
 from matplotlib import pyplot as plt
-from scipy import misc
+import math
 from matplotlib import rc, font_manager
 rc('font', family=font_manager.FontProperties(fname='C:/Windows/Fonts/malgunsl.ttf').get_name())
 import matplotlib
+
 matplotlib.rcParams['axes.unicode_minus'] = False
+import numpy as np
 '''
 예제 출처
 https://prlabhotelshoe.tistory.com/20?category=1003351
@@ -28,8 +29,9 @@ class Solution(Reader):
             print(' **** 전처리 *** ')
             print('1. 크롤링(텍스트 마이닝)')
             print('2. 정형화(객체)')
-            print('3. 토큰화')
-            print('4. 임베딩')
+            print('3. 영화댓글이 긍정인지 부정인지 ratio 값으로 판단하시오. \n'
+                  '너무 좋아요. 내 인생의 최고의 명작 영화\n'
+                  '이렇게 졸린 영화는 처음이야')
             print(' **** 후처리 *** ')
             return input('메뉴 선택 \n')
 
@@ -59,7 +61,10 @@ class Solution(Reader):
         avg_score = self.get_avg_score(top10)
         self.visualization(top10, avg_score)
 
+
+
     def crawling(self):
+
         file = self.file
 
         file.fname = 'movie_reviews.txt'
@@ -103,8 +108,8 @@ class Solution(Reader):
         ic(movie_lst[:10])
         cnt_movie = df.title.value_counts()
         ic(cnt_movie[:20])
-        info_movie = df.groupby('title')['score'].describe()
-        ic(info_movie.sort_values(by=['count'], axis=0, ascending=False))
+        # info_movie = df.groupby('title')['score'].describe() lambda 로 변환
+        ic((lambda a, b: df.groupby(a)[b].describe())('title', 'score').sort_values(by=['count'], axis=0, ascending=False))
 
     def top10_movies(self, df):
         top10 = df.title.value_counts().sort_values(ascending=False)[:10]
@@ -118,6 +123,8 @@ class Solution(Reader):
             avg = top10[top10['title'] == t]['score'].mean()
             avg_score[t] = avg
         return avg_score
+
+
 
     def visualization(self, top10, avg_score):
         plt.figure(figsize=(10, 5))
@@ -133,10 +140,11 @@ class Solution(Reader):
                      horizontalalignment='center',
                      verticalalignment='bottom')
 
-        plt.show()
-        self.rating_distribution(top10, avg_score)
+        # plt.show()
+        # self.rating_distribution(top10, avg_score)
+        self.circle_chart(top10, avg_score)
 
-    def rating_distribution(self, avg_score, top10):
+    def rating_distribution(self,top10, avg_score):
         fig, axs = plt.subplots(5, 2, figsize=(15, 25))
         axs = axs.flatten()
 
@@ -149,6 +157,24 @@ class Solution(Reader):
             ax.plot(x, y, 'o')
             ax.axhline(avg, color='red', linestyle='--')  # -- 평균 점선 나타내기
 
+        plt.show()
+
+    def circle_chart(self, top10, avg_score):
+        fig, axs = plt.subplots(5, 2, figsize=(15, 25))
+        axs = axs.flatten()
+        colors = ['pink', 'gold', 'whitesmoke']
+        labels = ['1 (8~10점)', '0 (1~4점)', '2 (5~7점)']
+
+        for title, ax in zip(avg_score.keys(), axs):
+            num_reviews = len(top10[top10['title'] == title])
+            values = top10[top10['title'] == title]['label'].value_counts()
+            ax.set_title('\n%s (%d명)' % (title, num_reviews), fontsize=15)
+            ax.pie(values,
+                   autopct='%1.1f%%',
+                   colors=colors,
+                   shadow=True,
+                   startangle=90)
+            ax.axis('equal')
         plt.show()
 
     def tokenization(self):
