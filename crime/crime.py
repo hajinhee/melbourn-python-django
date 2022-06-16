@@ -5,6 +5,9 @@ import folium
 import numpy as np
 from sklearn import preprocessing
 
+import pandas as pd
+import numpy as np
+
 
 class Solution(Reader):
     def __init__(self):
@@ -117,7 +120,6 @@ class Solution(Reader):
         crime['구별'] = gu_names
         # print(crime)
         crime.to_csv('./save/police_pos.csv', index=False)
-
 
     def save_cctv_pos(self):
         file = self.file
@@ -256,7 +258,6 @@ class Solution(Reader):
     def draw_crime_map(self):
         file = self.file
         file.context = './data/'
-
         file.fname = 'geo_simple'
         seoul_map = self.mpa_json(file)  # 서울시 지도 geo_simple
         file.fname = 'crime_in_seoul'
