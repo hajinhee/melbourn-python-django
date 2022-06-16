@@ -34,10 +34,8 @@ class Solution(Reader):
             print(' **** 전처리 *** ')
             print('1. 크롤링(텍스트 마이닝)')
             print('2. 정형화(객체)')
-            print('3. 영화댓글이 긍정인지 부정인지 ratio 값으로 판단하시오. \n'
-                  '너무 좋아요. 내 인생의 최고의 명작 영화\n'
-                  '이렇게 졸린 영화는 처음이야')
-            print(' **** 후처리 *** ')
+            print('3. 영화댓글이 긍정인지 부정인지 ratio 값으로 판단하시오.')
+            print(' **** 후처리 **** ')
             return input('메뉴 선택 \n')
 
         while 1:
@@ -49,8 +47,9 @@ class Solution(Reader):
             elif menu == '2':
                 self.preprocess()
             elif menu == '3':
-                self.naiveBayesClassifier('너무 좋아요.')
-                # 0.89
+                self.naiveBayesClassifier('재밌어요~~~~~')
+                # 0.99
+
 
     def preprocess(self):
         self.stereotype()
@@ -176,6 +175,13 @@ class Solution(Reader):
             ax.axis('equal')
         plt.show()
 
+
+    '''
+    **********************
+    Naive Bayes Classifier
+    **********************
+    '''
+
     def naiveBayesClassifier(self, doc):
         file = self.file
         file.fname = 'movie_reviews.txt'
@@ -183,12 +189,23 @@ class Solution(Reader):
         self.train(trainfile_path)
         self.classify(doc)
 
+    # 리스트에 들어있는 데이터에 순서대로 name을 지정해주고 필요없는 column 는 모두 지운다.
     def load_corpus(self, path):
         corpus = pd.read_table(path, sep='\t', encoding='UTF-8', names=['title', 'point', 'doc', 'label'])
-        corpus.drop(columns={'title', 'label'}, inplace=True)
+        corpus.drop(columns={'title', 'label'}, inplace=True)  # 할당없이 바로 적용하기 위해서는 inplace=True 필수!
         corpus = np.array(corpus)
         return corpus
+    '''
+     [[10 '이 영화를 보고 기분이 좋아졌어요.']
+     [1 '폭망이다 이건 시간아까움감상포인트 없음']
+     [1 '배우를 낭비한 영화..']
+     ...
+     [10 '기대하고 있어요..new']
+     [10 '정말 재미있어요  한국영화도 이렇게 잘만들수 있나']
+    '''
 
+    # point=평점, doc=리뷰
+    # for문에는 반드시 리스트에 담겨있는 순서대로 입력해야 한다.(리스트에는 index가 존재)
     def count_words(self, training_set):
         counts = defaultdict(lambda: [0, 0])
         for point, doc in training_set:
@@ -198,6 +215,11 @@ class Solution(Reader):
                 words = doc.split()
                 for word in words:
                     counts[word][0 if point > 3.5 else 1] += 1
+        '''
+         {'이': [89, 33], '영화를': [57, 31], '보고': [118, 36], '기분이': [6, 1], 
+         '좋아졌어요.': [1, 0], '폭망이다': [0, 1], '이건': [25, 15], '시간아까움감상포인트': [0, 1], 
+         '없음': [18, 16], '배우를': [1, 2], '낭비한': [0, 1], '영화..': [6, 5], '재미있게': [73, 8],
+        '''
         return counts
 
     def isNumber(self, s):
@@ -208,7 +230,6 @@ class Solution(Reader):
             return False
 
     def word_probabilities(self, counts, total_class0, total_class1, k):
-        """pass"""
         # 단어의 빈도수를 [단어, p(w|긍정), p(w|부정)] 형태로 변환
         return [(w, (class0 + k) / (total_class0 + 2 * k), (class1 + k) / (total_class1 + 2 * k)) for
                 w, (class0, class1) in counts.items()]
@@ -239,14 +260,17 @@ class Solution(Reader):
         training_set = self.load_corpus(trainfile_path)
         # 범주0 (긍정) 과 범주1(부정) 문서의 수를 세어줌
         num_class0 = len([1 for point, _ in training_set if point > 3.5])
+        '''num_class0: 3961'''
         num_class1 = len(training_set) - num_class0
+        '''num_class1: 1039'''
         # train
         word_counts = self.count_words(training_set)
-        # print(word_counts)
         self.word_probs = self.word_probabilities(word_counts, num_class0, num_class1, self.k)
 
     def classify(self, doc):
-        return ic(self.class0_probability(self.word_probs, doc))
+        probability = self.class0_probability(self.word_probs, doc)
+        ic(probability)
+        return probability
 
     def tokenization(self):
         pass

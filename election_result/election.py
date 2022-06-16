@@ -6,7 +6,7 @@ import folium
 import warnings
 warnings.simplefilter(action = 'ignore', category = FutureWarning)
 from icecream import ic
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt, font_manager
 from context.domains import Reader, File
 import platform
 import matplotlib.pyplot as plt
@@ -35,29 +35,20 @@ class Solution(Reader):
                 self.draw_korea()
             if menu == '3':
                 self.draw_korea_geo()
-            if menu == '4':
-                pass
-            if menu == '5':
-                pass
             elif menu == '0':
                 break
-
-    # '중구', '남구'와 같은 두 글자 이름은 그대로 보내고, '중랑구', '서초구'와 같은 두 글자 이상의 이름은 '중랑', '서초'와 같이 줄이기
-    def cut_char_sigu(self, name):
-        return name if len(name) == 2 else name[:-1]
 
     def preprocess(self):
         file = self.file
         file.fname = 'election_result'
         election_result = self.csv(file)
         # ic(election_result.head())
-        election_result = self.change_name(election_result)
+        election_result = self.change_char_sido(election_result)
         election_result = self.calc_percent_vote(election_result)
         file.fname = 'draw_korea'
         draw_korea = self.csv(file)
         # draw_korea.head()
         self.create_final_data(draw_korea, election_result)
-
 
     def compare_percent_vote(self, final_elect_data):
         # 문재인 후보와 홍준표 후보의 득표율 차이
@@ -99,7 +90,6 @@ class Solution(Reader):
         final_elect_data.to_csv('./save/final_elect_data.csv', index=False)
         return final_elect_data
 
-
     def create_final_data(self, draw_korea, election_result):
         # draw_korea의 ID와 election_result의 ID가 서로 일치하는 지 확인
         # 두 개를 집합으로 보고, 서로의 차집합을 구해서 둘 다 공집합이면 된다.
@@ -138,9 +128,9 @@ class Solution(Reader):
         229    229  경상남도  창원시마산회원구  136757.0   45014.0  56340.0  17744.0   창원 회원
         '''
 
-        # draw_korea의 데이터에는 부천시의 구가 존재하고, election_result에는 없다
-        # 원칙적으로는 각 동의 인구를 다시 조사하고 이를 엣 지역구에 맞춰야 하지만, 부천시는 단순히 '3'으로 나눠서 진행하도록 하겠다
-        # 단, 득표율인 'rate_moon', 'rate_hong', 'rate_ahn'은 '3'으로 나눌 필요가 없다!
+        # draw_korea의 데이터에는 부천시의 구가 존재하고, election_result에는 없다.
+        # 원칙적으로는 각 동의 인구를 다시 조사하고 이를 엣 지역구에 맞춰야 하지만, 부천시는 단순히 '3'으로 나눠서 진행한다.
+        # 단, 득표율인 'rate_moon', 'rate_hong', 'rate_ahn'은 '3'으로 나눌 필요가 없다.
 
         # ic(election_result[election_result['시군'] == '부천시'])
         '''
@@ -169,21 +159,25 @@ class Solution(Reader):
                                     pop_tmp, moon_tmp, hong_tmp, ahn_tmp, '부천 원미',
                                     rate_moon_tmp, rate_hong_tmp, rate_ahn_tmp]
 
-        # 이제 남아 있는 '[85]부천시'는 제거
+        # 이제 남아 있는 '[85]부천시'는 제거한다.
         election_result.drop([85], inplace=True)
 
-        # 다시 한 번 draw_korea의 ID와 election_result의 ID가 서로 일치하는 지 확인
+        # 다시 한 번 draw_korea의 ID와 election_result의 ID가 서로 일치하는 지 확인한다.
         set(draw_korea['ID'].unique()) - set(election_result['ID'].unique())
         set(election_result['ID'].unique()) - set(draw_korea['ID'].unique())
 
-        # election_result와 draw_korea를 merge()를 사용해서 최종 데이터 셋을 생성
+        # election_result와 draw_korea를 merge()를 사용해서 최종 데이터 셋을 생성한다.
         final_elect_data = pd.merge(election_result, draw_korea, how='left', on=['ID'])
         # ic(final_elect_data.head())
         final_elect_data = self.compare_percent_vote(final_elect_data)
 
         return final_elect_data
 
-    def change_sido_name(self, election_result):
+    # '중구', '남구'와 같은 두 글자 이름은 그대로 보내고, '중랑구', '서초구'와 같은 두 글자 이상의 이름은 '중랑', '서초'와 같이 줄인다.
+    def cut_char_sigu(self, name):
+        return name if len(name) == 2 else name[:-1]
+
+    def change_char_sido(self, election_result):
         # '광역시도' 이름에서 앞 두글자 따오기
         sido_candi = election_result['광역시도']
         sido_candi = [name[:2] if name[:2] in ['서울', '부산', '대구', '광주', '인천', '대전', '울산']
@@ -197,7 +191,7 @@ class Solution(Reader):
                         4           4  서울특별시  광진구  240030.0  105512.0  46368.0  52824.0
         '''
 
-        # 광역시가 아닌 '시군'에 대해 '안양 만안', '안양 동안'과 같이 정리하기
+        # 광역시가 아닌 '시군'에 대해 '안양 만안', '안양 동안'과 같이 정리한다.
         sigun_candi = [''] * len(election_result)
         for n in election_result.index:
             each = election_result['시군'][n]
@@ -210,8 +204,8 @@ class Solution(Reader):
         # ic(sigun_candi)
 
         # sido_candi 변수에서 그냥 공란이 있으면 첫 글자가 띄어쓰기가 될 수 있다.
-        # 따라서 첫 글자가 공백인 경우, 그 다음 글자부터 읽어오도록 해주었다.
-        # 또한, '세종시'의 경우는 예외로 따로 처리해주었다.
+        # 따라서 첫 글자가 공백인 경우, 그 다음 글자부터 읽어오도록 한다.
+        # 또한, '세종시'의 경우는 예외로 따로 처리해준다.
         ID_candi = [sido_candi[n] + ' ' + sigun_candi[n] for n in range(0, len(sigun_candi))]
         ID_candi = [name[1:] if name[0] == ' ' else name for name in ID_candi]
         ID_candi = [name[:2] if name[:2] == '세종' else name for name in ID_candi]
@@ -219,11 +213,9 @@ class Solution(Reader):
         # ic(election_result.head(10))
         return election_result
 
-
-
     def calc_percent_vote(self, election_result):
         # 득표율 = 득표수 / 투표자수
-        # 문재인, 홍준표, 안철수 후보의 득표율을 계산
+        # 문재인, 홍준표, 안철수 후보의 득표율 계산
         election_result[['rate_moon', 'rate_hong', 'rate_ahn']] = election_result[['moon', 'hong', 'ahn']] \
             .div(election_result['pop'], axis=0)
         election_result[['rate_moon', 'rate_hong', 'rate_ahn']] *= 100
@@ -237,7 +229,7 @@ class Solution(Reader):
         4           4  서울특별시  광진구  240030.0  ...  서울 광진  43.957839  19.317585  22.007249
         '''
 
-        # 문재인 후보가 높은 비율로 득표한 지역 확인하기
+        # 문재인 후보가 높은 비율로 득표한 지역 확인
         election_result.sort_values(['rate_moon'], ascending=[False]).head(10)
         '''
              Unnamed: 0   광역시도      시군  ...  rate_moon  rate_hong   rate_ahn
@@ -247,7 +239,7 @@ class Solution(Reader):
         175         175   전라북도     장수군  ...  66.633497   4.459233  20.853287
         184         184   전라남도     광양시  ...  65.927955   4.253818  20.833333                                                  
         '''
-        # 홍준표 후보가 높은 비율로 득표한 지역 확인하기
+        # 홍준표 후보가 높은 비율로 득표한 지역 확인
         election_result.sort_values(['rate_hong'], ascending=[False]).head(10)
         '''
          Unnamed: 0  광역시도   시군      pop  ...  ID  rate_moon  rate_hong   rate_ahn
@@ -257,7 +249,7 @@ class Solution(Reader):
         247         247  경상남도  합천군  33021.0  ...  합천  21.631689  59.655976   9.318313
         216         216  경상북도  고령군  22396.0  ...  고령  16.761922  59.153420  11.609216
         '''
-        # 안철수 후보가 높은 비율로 득표한 지역 확인하기
+        # 안철수 후보가 높은 비율로 득표한 지역 확인
         election_result.sort_values(['rate_ahn'], ascending=[False]).head(10)
         '''
          Unnamed: 0   광역시도   시군       pop  ...     ID  rate_moon  rate_hong   rate_ahn
@@ -268,7 +260,6 @@ class Solution(Reader):
        197         197   전라남도  영암군   36402.0  ...     영암  52.192187   2.266359  37.388056
         '''
         return election_result
-
 
     def visualize_percent_vote(self, target_data, blocked_map, cmap_name):
         BORDER_LINES = [
@@ -304,7 +295,7 @@ class Solution(Reader):
 
         # 지역 이름 표시
         for idx, row in blocked_map.iterrows():
-            # 광역시는 구 이름이 겹치는 경우가 많아서 시단위 이름도 같이 표시한다
+            # 광역시는 구 이름이 겹치는 경우가 많아서 시단위 이름도 같이 표시한다.
             # (중구, 서구)
             if len(row['ID'].split()) == 2:
                 dispname = '{}\n{}'.format(row['ID'].split()[0], row['ID'].split()[1])
@@ -313,7 +304,7 @@ class Solution(Reader):
             else:
                 dispname = row['ID']
 
-            # 서대문구, 서귀포시 같이 이름이 3자 이상인 경우에 작은 글자로 표시한다
+            # 서대문구, 서귀포시 같이 이름이 3자 이상인 경우에 작은 글자로 표시한다.
             if len(dispname.splitlines()[-1]) >= 3:
                 fontsize, linespacing = 10.0, 1.1
             else:
@@ -324,7 +315,7 @@ class Solution(Reader):
                          fontsize=fontsize, ha='center', va='center', color=annocolor,
                          linespacing=linespacing)
 
-        # 시도 경계 그린다
+        # 시도 경계 그린다.
         for path in BORDER_LINES:
             ys, xs = zip(*path)
             plt.plot(xs, ys, c='black', lw=2)
@@ -365,29 +356,29 @@ class Solution(Reader):
         file.fname = 'skorea_municipalities_geo_simple'
         geo_path = self.mpa_json(file)
 
-        # Folium을 사용해서 득표율 격차를 지도에 시각화하기
+        # Folium을 사용해서 득표율 격차를 지도에 시각화
         # 'ID'를 index로
         pop_folium = final_elect_data.set_index('ID')
-        # '광역시도', '시군' 변수는 필요가 없으므로 삭제
+        # '광역시도', '시군' 변수는 필요가 없으니 삭제
         del pop_folium['광역시도']
         del pop_folium['시군']
         pop_folium.head()
         map = folium.Map(location=[36.2002, 127.054], zoom_start=6)
-        # "문재인 후보 vs 홍준표 후보" 득표율 격차를 시각화
+        # "문재인 후보 vs 홍준표 후보" 득표율 격차 시각화
         map.choropleth(geo_data=geo_path,
                        data=pop_folium['moon_vs_hong'],
                        columns=[pop_folium.index, pop_folium['moon_vs_hong']],
                        fill_color='PuBu',  # 'PuRd', 'YlGnBu'
                        key_on='feature.id')
         map.save('./save/moon_vs_hong_map.html')
-        # "문재인 후보 vs 안철수 후보" 득표율 격차를 시각화
+        # "문재인 후보 vs 안철수 후보" 득표율 격차 시각화
         map.choropleth(geo_data=geo_path,
                        data=pop_folium['moon_vs_ahn'],
                        columns=[pop_folium.index, pop_folium['moon_vs_ahn']],
                        fill_color='PuBu',  # 'PuRd', 'YlGnBu'
                        key_on='feature.id')
         map.save('./save/moon_vs_ahn_map.html')
-        # "안철수 후보 vs 홍준표 후보" 득표율 격차를 시각화
+        # "안철수 후보 vs 홍준표 후보" 득표율 격차 시각화
         map.choropleth(geo_data=geo_path,
                        data=pop_folium['ahn_vs_hong'],
                        columns=[pop_folium.index, pop_folium['ahn_vs_hong']],
