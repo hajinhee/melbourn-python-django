@@ -10,8 +10,9 @@ class Article(models.Model):
     title = models.CharField(max_length=20)
     content = models.TextField()
     written_date = models.DateField()
-    user_name = models.ForeignKey(User, on_delete=models.CASCADE)
-    board_name = models.ForeignKey(Board, on_delete=models.CASCADE)
+
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    board_id = models.ForeignKey(Board, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "articles"

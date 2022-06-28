@@ -49,7 +49,6 @@ class Solution(object):
                   loss='sparse_categorical_crossentropy',
                   metrics=['accuracy'])
 
-
     def training_evaluation_model(self):
         self.model.fit(self.x_train, self.y_train, epochs=5)
 
@@ -58,4 +57,4 @@ class Solution(object):
 
 
 if __name__ == '__main__':
-    pass
+    Solution().hook()
